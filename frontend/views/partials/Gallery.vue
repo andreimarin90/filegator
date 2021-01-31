@@ -43,7 +43,7 @@ export default {
   },
   methods: {
     imageSrc(path) {
-      return this.getDownloadLink(path)
+      return this.getDownloadUrl(path)
     },
   },
 }

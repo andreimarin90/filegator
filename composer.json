@@ -18,7 +18,9 @@
         "php-di/php-di": "^6.0",
         "rakit/validation": "^1.1",
         "league/flysystem": "^1.0",
-        "league/flysystem-ziparchive": "^1.0"
+        "league/flysystem-ziparchive": "^1.0",
+        "league/flysystem-sftp": "^1.0",
+        "tinify/tinify": "^1.5"
     },
     "authors": [
         {

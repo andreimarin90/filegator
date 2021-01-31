@@ -15,6 +15,7 @@ use Filegator\Kernel\Request;
 use Filegator\Kernel\Response;
 use Filegator\Services\Archiver\ArchiverInterface;
 use Filegator\Services\Auth\AuthInterface;
+use Filegator\Services\Auth\User;
 use Filegator\Services\Session\SessionStorageInterface as Session;
 use Filegator\Services\Storage\Filesystem;
 
@@ -32,16 +33,18 @@ class FileController
 
     protected $separator;
 
+    protected $currentUser;
+
     public function __construct(Config $config, Session $session, AuthInterface $auth, Filesystem $storage)
     {
         $this->session = $session;
         $this->config = $config;
         $this->auth = $auth;
 
-        $user = $this->auth->user() ?: $this->auth->getGuest();
+        $this->currentUser = $this->auth->user() ?: $this->auth->getGuest();
 
         $this->storage = $storage;
-        $this->storage->setPathPrefix($user->getHomeDir());
+        $this->storage->setPathPrefix($this->currentUser->getHomeDir());
 
         $this->separator = $this->storage->getSeparator();
     }
@@ -67,14 +70,14 @@ class FileController
     public function createNew(Request $request, Response $response)
     {
         $type = $request->input('type', 'file');
-        $name = $request->input('name');
+        $name = str_replace(' ', '_', trim($request->input('name')));
         $path = $this->session->get(self::SESSION_CWD, $this->separator);
 
         if ($type == 'dir') {
-            $this->storage->createDir($path, $request->input('name'));
+            $this->storage->createDir($path, $name);
         }
         if ($type == 'file') {
-            $this->storage->createFile($path, $request->input('name'));
+            $this->storage->createFile($path, $name);
         }
 
         return $response->json('Done');
@@ -99,6 +102,10 @@ class FileController
 
     public function moveItems(Request $request, Response $response)
     {
+        if($this->isUserAllowedToDelete($this->currentUser) === false) {
+            return $response->json('Not Allowed!!!');
+        }
+
         $items = $request->input('items', []);
         $destination = $request->input('destination', $this->separator);
 
@@ -146,6 +153,10 @@ class FileController
 
     public function renameItem(Request $request, Response $response)
     {
+        if($this->isUserAllowedToDelete($this->currentUser) === false) {
+            return $response->json('Not Allowed');
+        }
+
         $destination = $request->input('destination', $this->separator);
         $from = $request->input('from');
         $to = $request->input('to');
@@ -157,6 +168,10 @@ class FileController
 
     public function deleteItems(Request $request, Response $response)
     {
+        if($this->isUserAllowedToDelete($this->currentUser) === false) {
+            return $response->json('Not Allowed');
+        }
+
         $items = $request->input('items', []);
 
         foreach ($items as $item) {
@@ -190,5 +205,10 @@ class FileController
         }
 
         return $response->json('Done');
+    }
+
+    protected function isUserAllowedToDelete(User $user)
+    {
+        return $user->isAdmin();
     }
 }

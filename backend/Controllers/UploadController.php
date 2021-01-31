@@ -15,6 +15,7 @@ use Filegator\Kernel\Request;
 use Filegator\Kernel\Response;
 use Filegator\Services\Auth\AuthInterface;
 use Filegator\Services\Storage\Filesystem;
+use Filegator\Services\TinyPng\TinyPng;
 use Filegator\Services\Tmpfs\TmpfsInterface;
 
 class UploadController
@@ -27,11 +28,14 @@ class UploadController
 
     protected $tmpfs;
 
+    protected $tinyPngService;
+
     public function __construct(Config $config, AuthInterface $auth, Filesystem $storage, TmpfsInterface $tmpfs)
     {
         $this->config = $config;
         $this->auth = $auth;
         $this->tmpfs = $tmpfs;
+        $this->tinyPngService = new TinyPng();
 
         $user = $this->auth->user() ?: $this->auth->getGuest();
 
@@ -104,6 +108,7 @@ class UploadController
                 $this->tmpfs->write($file_name, $part['stream'], true);
             }
 
+            $this->compressImage($file_name);
             $final = $this->tmpfs->readStream($file_name);
             $res = $this->storage->store($destination, $final['filename'], $final['stream'], $overwrite_on_upload);
 
@@ -116,6 +121,16 @@ class UploadController
             return $res ? $response->json('Stored') : $response->json('Error storing file');
         }
 
+        $this->compressImage($file_name);
+
         return $response->json('Uploaded');
+    }
+
+    private function compressImage(string $filename)
+    {
+        $tmpImage = $this->tmpfs->getFileLocation($filename);
+        if(getimagesize($tmpImage)) {
+            $this->tinyPngService->compressImage($tmpImage);
+        }
     }
 }

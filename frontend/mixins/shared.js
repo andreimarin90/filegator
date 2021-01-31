@@ -136,8 +136,11 @@ const funcs = {
         duration: 5000,
       })
     },
-    getDownloadLink(path) {
+    getDownloadUrl(path) {
       return Vue.config.baseURL+'/download&path='+encodeURIComponent(Base64.encode(path))
+    },
+    getStackPathUrl(path) {
+      return Vue.config.stackPath + '/Email' + path
     },
     hasPreview(name) {
       return this.isText(name) || this.isImage(name)

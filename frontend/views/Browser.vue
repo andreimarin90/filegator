@@ -138,8 +138,11 @@
                 <b-dropdown-item v-if="can('write')" aria-role="listitem" @click="remove($event, props.row)">
                   <b-icon icon="trash-alt" size="is-small" /> {{ lang('Delete') }}
                 </b-dropdown-item>
-                <b-dropdown-item v-if="props.row.type == 'file' && can('download')" v-clipboard:copy="getDownloadLink(props.row.path)" aria-role="listitem">
-                  <b-icon icon="clipboard" size="is-small" /> {{ lang('Copy link') }}
+                <b-dropdown-item v-if="props.row.type == 'file' && can('download')" v-clipboard:copy="getDownloadUrl(props.row.path)" aria-role="listitem">
+                  <b-icon icon="clipboard" size="is-small" /> {{ lang('Copy Download URL') }}
+                </b-dropdown-item>
+                <b-dropdown-item v-if="props.row.type == 'file' && can('download')" v-clipboard:copy="getStackPathUrl(props.row.path)" aria-role="listitem">
+                  <b-icon icon="clipboard" size="is-small" /> {{ lang('Copy StackPath URL') }}
                 </b-dropdown-item>
               </b-dropdown>
             </b-table-column>
@@ -356,7 +359,7 @@ export default {
         })
     },
     download(item) {
-      window.open(this.getDownloadLink(item.path), '_blank')
+      window.open(this.getDownloadUrl(item.path), '_blank')
     },
     search() {
       this.$modal.open({
